@@ -57,7 +57,7 @@ public final class Labels {
 	@Override
 	public String toString() {
 		// TODO: Implement the method using the Stream API (see also class Registers).
-		return Registers.entrySet().stream()
+		return Labels.entrySet().stream()
 				.map(entry -> entry.getKey() + " = " + entry.getValue())
 				.collect(Collectors.joining("\n"));;
 	}
