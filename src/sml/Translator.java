@@ -74,38 +74,44 @@ public final class Translator {
             }
 
             // TODO: add code for all other types of instructions
+            // TODO: Then, replace the switch by using the Reflection API
             public class Translator {
                 public static Instruction translate(String instructionString) throws TranslationException {
                     String[] tokens = instructionString.split("\\s+");
                     String opcode = tokens[0].toUpperCase();
 
-                    switch (opcode) {
-                        case "LOAD":
-                            if (tokens.length != 3) {
-                                throw new TranslationException("Invalid number of operands for LOAD instruction: " + instructionString);
+                    try {
+                        Class<?> instructionClass = Class.forName("com.example.Instructions." + opcode + "Instruction");
+                        Constructor<?>[] constructors = instructionClass.getConstructors();
+                        for (Constructor<?> constructor : constructors) {
+                            Class<?>[] parameterTypes = constructor.getParameterTypes();
+                            if (parameterTypes.length == tokens.length - 1) {
+                                Object[] arguments = new Object[parameterTypes.length];
+                                for (int i = 0; i < arguments.length; i++) {
+                                    arguments[i] = parseParameter(parameterTypes[i], tokens[i + 1]);
+                                }
+                                return (Instruction) constructor.newInstance(arguments);
                             }
-                            Register dest = parseRegister(tokens[1]);
-                            int address = parseAddress(tokens[2]);
-                            return new LoadInstruction(dest, address);
-                        case "STORE":
-                            if (tokens.length != 3) {
-                                throw new TranslationException("Invalid number of operands for STORE instruction: " + instructionString);
-                            }
-                            Register src = parseRegister(tokens[1]);
-                            address = parseAddress(tokens[2]);
-                            return new StoreInstruction(src, address);
-                        case "ADD":
-                            if (tokens.length != 4) {
-                                throw new TranslationException("Invalid number of operands for ADD instruction: " + instructionString);
-                            }
-                            dest = parseRegister(tokens[1]);
-                            Register src1 = parseRegister(tokens[2]);
-                            Register src2 = parseRegister(tokens[3]);
-                            return new AddInstruction(dest, src1, src2);
-                        default:
-                            throw new TranslationException("Unknown instruction: " + instructionString);
+                        }
+                        throw new TranslationException("Invalid number of operands for " + opcode + " instruction: " + instructionString);
+                    } catch (ClassNotFoundException e) {
+                        throw new TranslationException("Unknown instruction: " + instructionString);
+                    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
+                        throw new TranslationException("Error creating instruction: " + instructionString, e);
                     }
                 }
+
+                private static Object parseParameter(Class<?> parameterType, String token) throws TranslationException {
+                    if (parameterType == Register.class) {
+                        return parseRegister(token);
+                    } else if (parameterType == int.class) {
+                        return parseAddress(token);
+                    } else {
+                        throw new TranslationException("Unsupported parameter type: " + parameterType.getName());
+                    }
+                }
+
+            }
 
                 private static Register parseRegister(String token) throws TranslationException {
                     try {
@@ -123,9 +129,6 @@ public final class Translator {
                     }
                 }
             }
-
-            // TODO: Then, replace the switch by using the Reflection API
-
             // TODO: Next, use dependency injection to allow this machine class
             //       to work with different sets of opcodes (different CPUs)
             public interface OpcodeSet {
