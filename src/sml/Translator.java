@@ -74,11 +74,103 @@ public final class Translator {
             }
 
             // TODO: add code for all other types of instructions
+            public class Translator {
+                public static Instruction translate(String instructionString) throws TranslationException {
+                    String[] tokens = instructionString.split("\\s+");
+                    String opcode = tokens[0].toUpperCase();
+
+                    switch (opcode) {
+                        case "LOAD":
+                            if (tokens.length != 3) {
+                                throw new TranslationException("Invalid number of operands for LOAD instruction: " + instructionString);
+                            }
+                            Register dest = parseRegister(tokens[1]);
+                            int address = parseAddress(tokens[2]);
+                            return new LoadInstruction(dest, address);
+                        case "STORE":
+                            if (tokens.length != 3) {
+                                throw new TranslationException("Invalid number of operands for STORE instruction: " + instructionString);
+                            }
+                            Register src = parseRegister(tokens[1]);
+                            address = parseAddress(tokens[2]);
+                            return new StoreInstruction(src, address);
+                        case "ADD":
+                            if (tokens.length != 4) {
+                                throw new TranslationException("Invalid number of operands for ADD instruction: " + instructionString);
+                            }
+                            dest = parseRegister(tokens[1]);
+                            Register src1 = parseRegister(tokens[2]);
+                            Register src2 = parseRegister(tokens[3]);
+                            return new AddInstruction(dest, src1, src2);
+                        default:
+                            throw new TranslationException("Unknown instruction: " + instructionString);
+                    }
+                }
+
+                private static Register parseRegister(String token) throws TranslationException {
+                    try {
+                        return Register.valueOf(token.toUpperCase());
+                    } catch (IllegalArgumentException e) {
+                        throw new TranslationException("Invalid register name: " + token);
+                    }
+                }
+
+                private static int parseAddress(String token) throws TranslationException {
+                    try {
+                        return Integer.parseInt(token);
+                    } catch (NumberFormatException e) {
+                        throw new TranslationException("Invalid address: " + token);
+                    }
+                }
+            }
 
             // TODO: Then, replace the switch by using the Reflection API
 
             // TODO: Next, use dependency injection to allow this machine class
             //       to work with different sets of opcodes (different CPUs)
+            public interface OpcodeSet {
+                Instruction decode(int opcode);
+            }
+
+            public class Machine {
+                private OpcodeSet opcodeSet;
+                private Map<String, Integer> labels;
+                private List<Instruction> program;
+                private Map<Register, Integer> registers;
+                private int programCounter;
+
+                public Machine(OpcodeSet opcodeSet, Map<String, Integer> labels, List<Instruction> program, Map<Register, Integer> registers) {
+                    this.opcodeSet = opcodeSet;
+                    this.labels = labels;
+                    this.program = program;
+                    this.registers = registers;
+                    this.programCounter = 0;
+                }
+
+                public void run() {
+                    while (programCounter < program.size()) {
+                        Instruction instr = program.get(programCounter);
+                        instr.execute(this);
+                        programCounter++;
+                    }
+                }
+
+                public int getAddress(String label) {
+                    return labels.get(label);
+                }
+
+                public int getRegisterValue(Register register) {
+                    return registers.getOrDefault(register, 0);
+                }
+
+                public void setRegisterValue(Register register, int value) {
+                    registers.put(register, value);
+                }
+
+                public OpcodeSet getOpcodeSet() {
+                    return opcodeSet;
+                }
+            }
 
             default -> {
                 System.out.println("Unknown instruction: " + opcode);
