@@ -37,6 +37,13 @@ public final class Labels {
 		// TODO: Where can NullPointerException be thrown here?
 		//       (Write an explanation.)
 		//       Add code to deal with non-existent labels.
+		/*
+		 A NullPointerException could be thrown by the get() method of the labels map if the
+		 label parameter in null or if there is no mapping given 'label' in the map.
+	 	*/
+		if (label == null || !labels.containsKey(label)) {
+			throw new IllegalArgumentException("Label does not exist: " + label);
+		}
 		return labels.get(label);
 	}
 
