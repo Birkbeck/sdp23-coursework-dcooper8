@@ -50,6 +50,11 @@ public abstract class Instruction {
 
 	// TODO: What does abstract in the declaration below mean?
 	//       (Write a short explanation.)
+	/*
+	The keyword abstract means the method does not have an implementation in this current class and
+	must be implemented by a non-abstract class, it has no body. Consequently, the 'toString()' is
+	declared as abstract.
+	 */
 	@Override
 	public abstract String toString();
 
